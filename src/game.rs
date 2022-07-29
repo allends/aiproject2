@@ -63,6 +63,8 @@ impl Game {
         // this is guarenteed to have at least one neighbor, but we will error handle anyway
         let mut rng = rand::thread_rng();
         let chosen_neighbor = neighbors.choose(&mut rng);
+
+        // move the target to the node that is randomly chosen from the neighbors
         match chosen_neighbor {
             Some(neighbor) => self.target = neighbor,
             None => (),
@@ -70,6 +72,7 @@ impl Game {
     }
 
     pub fn target_distance(&self) -> i32 {
+        // simple way to get the node distance to the target
         let node_map = dijkstra(&self.board, self.agent, Some(self.target), |_| 1);
         let distance = node_map.get(&self.target);
 
@@ -79,6 +82,7 @@ impl Game {
     pub fn agent_0(&mut self) -> i32 {
         let mut count = 0;
 
+        // loop that just waits for the target to enter the agents square
         while self.target != self.agent {
             self.move_target();
             count = count + 1;
@@ -90,12 +94,16 @@ impl Game {
         let mut count = 0;
         let mut rng = rand::thread_rng();
 
+        // loop while there is still distance between target and agent
         while self.target_distance() != 0 {
+            // randomly move the target
             self.move_target();
 
-            // move the agent closer
+            // find how far away the agent is
             let node_map = dijkstra(&self.board, self.agent, Some(self.target), |_| 1);
             let agent_distance = node_map.get(&self.target).unwrap();
+            
+            // see what moves are available and then filter them by if they are closer than the previous distance
             let neighbors: Vec<NodeIndex<_>> = self
                 .board
                 .neighbors(self.agent)
@@ -106,6 +114,8 @@ impl Game {
             if neighbors.len() == 0 {
                 continue;
             }
+
+            // randomly choose a move from the vector of options and go there
             let choice = neighbors.choose(&mut rng);
             match choice {
                 Some(neighbor) => self.agent = *neighbor,
@@ -124,9 +134,11 @@ impl Game {
         while self.target_distance() != 0 {
             self.move_target();
 
-            // move the agent closer
+            // find how far away the agent is
             let node_map = dijkstra(&self.board, self.agent, Some(self.target), |_| 1);
             let agent_distance = node_map.get(&self.target).unwrap();
+            
+            // see what moves are available and then filter them by if they are closer than the previous distance
             let neighbors: Vec<NodeIndex<_>> = self
                 .board
                 .neighbors(self.agent)
@@ -137,6 +149,8 @@ impl Game {
             if neighbors.len() == 0 {
                 continue;
             }
+
+            // choose the best possible move that is available (it is possible many are available)
             let mut choice = neighbors.choose(&mut rng).unwrap();
             for neighbor in &neighbors {
                 if node_map.get(neighbor).unwrap_or(&(SIZE as i32)) < node_map.get(choice).unwrap_or(&(SIZE as i32 - 1)) {
@@ -155,6 +169,8 @@ impl Game {
         let mut rng = rand::thread_rng();
         self.agent = rng.gen_range(0..39).into();
 
+        // basically the same as agent_0
+        // just observe the same node until the target is there
         while self.target != self.agent {
             self.move_target();
             count = count + 1;
